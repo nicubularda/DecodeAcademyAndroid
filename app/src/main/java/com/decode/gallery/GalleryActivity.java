@@ -1,49 +1,66 @@
 package com.decode.gallery;
 
 import android.content.Intent;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 
-import org.w3c.dom.Text;
+public class GalleryActivity extends AppCompatActivity implements ICallback {
 
-public class GalleryActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private Button mPreviewButton;
-    private TextView mResultTextView;
-    private String result = null;
+    private TabLayout mTabs;
+    private ViewPager mPager;
+    private int current = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
 
-        mPreviewButton = (Button) findViewById(R.id.button_preview);
-        mPreviewButton.setOnClickListener(this);
+        mTabs = findViewById(R.id.tabs);
+        mPager = findViewById(R.id.pager);
+        mPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
+            @Override
+            public Fragment getItem(int position) {
+                GalleryFragment frag = new GalleryFragment();
+                Bundle arg = new Bundle();
+                arg.putInt("type", position);
+                frag.setArguments(arg);
+                return frag;
+            }
 
-        mResultTextView = (TextView) findViewById(R.id.text_result);
+            @Override
+            public int getCount() {
+                return 3;
+            }
+
+            @Override
+            public CharSequence getPageTitle(int position) {
+                return "Page " + position;
+            }
+        });
+        mTabs.setupWithViewPager(mPager);
         if (savedInstanceState != null)
-            mResultTextView.setText(savedInstanceState.getString("result"));
+            current = savedInstanceState.getInt("type");
+        mPager.setCurrentItem(current);
     }
 
-    @Override
-    public void onClick(View view) {
+    public void addPreview() {
         Intent intent = new Intent(this, PreviewActivity.class);
         startActivityForResult(intent, 0);
     }
     @Override
-    protected void onActivityResult(int req, int resp, Intent intent) {
-        result = "Result " + resp;
-        mResultTextView.setText(result);
-
+    protected void onActivityResult(int req, int type, Intent intent) {
+        current = type;
+        mPager.setCurrentItem(type);
     }
 
     @Override
     public void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
-        state.putString("result", result);
-
+        state.putInt("type", current);
     }
 }

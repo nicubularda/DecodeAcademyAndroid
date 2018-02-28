@@ -10,6 +10,7 @@ public class PreviewActivity extends AppCompatActivity implements View.OnClickLi
 
     private Button mPreviewButton1;
     private Button mPreviewButton2;
+    private Button mPreviewButton3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,11 +22,14 @@ public class PreviewActivity extends AppCompatActivity implements View.OnClickLi
 
         mPreviewButton2 = (Button) findViewById(R.id.button_preview2);
         mPreviewButton2.setOnClickListener(this);
+
+        mPreviewButton3 = (Button) findViewById(R.id.button_preview3);
+        mPreviewButton3.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View view) {
-        setResult(view.getId() == R.id.button_preview1 ? 1 : 2);
+        setResult(view.getId() == R.id.button_preview1 ? 0 : view.getId() == R.id.button_preview2 ? 1 : 2);
         finish();
     }
 }
