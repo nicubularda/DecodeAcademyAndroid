@@ -1,19 +1,15 @@
 package com.decode.gallery;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.TextView;
-
 
 public class GalleryFragment extends Fragment implements View.OnClickListener {
     private int mType = 0;
     private Button mPreviewButton;
-    private TextView mResultTextView;
     private View view;
 
     public GalleryFragment() {
@@ -34,11 +30,7 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
         view = inflater.inflate(R.layout.fragment_gallery, container, false);
         mPreviewButton = (Button) view.findViewById(R.id.button_preview);
         mPreviewButton.setOnClickListener(this);
-
-        mResultTextView = (TextView) view.findViewById(R.id.text_result);
-        if (savedInstanceState != null)
-            mResultTextView.setText(savedInstanceState.getString("result"));
-        mResultTextView.setText("Result " + mType);
+        mPreviewButton.setText("Preview " + mType);
         return view;
     }
 
@@ -49,5 +41,4 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
                 && !getActivity().isFinishing())
             ((ICallback) getActivity()).addPreview();
     }
-
 }
