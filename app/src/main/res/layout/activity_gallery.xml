@@ -1,26 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.decode.gallery.GalleryActivity"
-    android:gravity="center" android:orientation="vertical">
-
-    <android.support.design.widget.TabLayout
-        android:id="@+id/tabs"
+<android.support.v4.widget.DrawerLayout android:id="@+id/drawer_layout"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:tabMode="fixed"
-        style="@style/GalleryTabLayout"
-        />
-    <android.support.v4.view.ViewPager
-        android:id="@+id/pager"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent" >
+        <android.support.v7.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:context="com.decode.gallery.GalleryActivity"
+            android:gravity="center" android:orientation="vertical">
 
-    </android.support.v4.view.ViewPager>
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/colorPrimary"
+                android:theme="@style/ThemeOverlay.AppCompat.Dark"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+                />
 
+            <android.support.design.widget.TabLayout
+                android:id="@+id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:tabMode="fixed"
+                style="@style/GalleryTabLayout"
+                />
+            <android.support.v4.view.ViewPager
+                android:id="@+id/pager"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
+            </android.support.v4.view.ViewPager>
+        </android.support.v7.widget.LinearLayoutCompat>
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/floating_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="16dp"
+            android:src="@drawable/ic_camera"
+            android:background="@color/colorAccent"
+            />
+    </RelativeLayout>s
 
-</android.support.v7.widget.LinearLayoutCompat>
+    <android.support.design.widget.NavigationView
+        android:id="@+id/drawer_navigation"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        app:headerLayout="@layout/drawer_header"
+        app:menu="@menu/menu_drawer">
+    </android.support.design.widget.NavigationView>
+</android.support.v4.widget.DrawerLayout>
