@@ -17,13 +17,15 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-public class GalleryActivity extends AppCompatActivity implements View.OnClickListener{
+public class GalleryActivity extends AppCompatActivity implements View.OnClickListener, ICallback{
 
 
     private TabLayout mTabs;
@@ -34,10 +36,13 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
     private NavigationView mNavigation;
     private FloatingActionButton mFAB;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
+
+
 
         mToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -87,21 +92,20 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
         mNavigation.setCheckedItem(current);
     }
 
-    private void dispatchTakePictureIntent() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, 1);
-        }
+    @Override
+    protected void onActivityResult(int req, int type, Intent intent) {
+//        Snackbar mySnackbar = Snackbar.make(findViewById(R.id.drawer_layout),
+//                req == 0 ? "image" : "video", Snackbar.LENGTH_SHORT);
+//        mySnackbar.setAction("Undo", this);
+//        mySnackbar.show();
     }
 
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.floating_button) {
-//            dispatchTakePictureIntent();
-            Snackbar mySnackbar = Snackbar.make(findViewById(R.id.drawer_layout),
-                    "my snack", Snackbar.LENGTH_SHORT);
-            mySnackbar.setAction("Undo", this);
-            mySnackbar.show();
+            Intent intent = new Intent(current == 0 ? MediaStore.ACTION_IMAGE_CAPTURE : MediaStore.ACTION_VIDEO_CAPTURE);
+            if (intent.resolveActivity(getPackageManager()) != null)
+                startActivityForResult(intent, 1);
         }
         else {
             Context context = getApplicationContext();
@@ -144,8 +148,16 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
+    public void addPreview(Object value) {
+        Intent intent = new Intent(this, PreviewActivity.class);
+        intent.putExtra("color", (int)value);
+        startActivityForResult(intent, 0);
+    }
+
     private void setCurrent(int value) {
         current = value;
         mPager.setCurrentItem(current);
     }
+
+
 }

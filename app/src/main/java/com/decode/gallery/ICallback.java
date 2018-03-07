@@ -5,5 +5,5 @@ package com.decode.gallery;
  */
 
 interface ICallback {
-    void addPreview();
+    void addPreview(Object value);
 }
