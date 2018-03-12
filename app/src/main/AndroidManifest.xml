@@ -19,6 +19,7 @@
         <activity android:name=".PreviewActivity"></activity>
     </application>
     <uses-feature android:name="android.hardware.camera"
-        android:required="true" />
+        android:required="true"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
 </manifest>

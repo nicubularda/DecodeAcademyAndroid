@@ -9,14 +9,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.lang.reflect.Array;
+import java.util.List;
 
 public class GalleryFragment extends Fragment implements View.OnClickListener {
     private int mType = 0;
     private View view;
     private RecyclerView mRecyclerView;
+
     public GalleryFragment() {
     }
 
@@ -26,6 +32,8 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
         if (getArguments() != null) {
             mType = getArguments().getInt("type");
         }
+
+
     }
 
     @Override
@@ -34,23 +42,8 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_gallery, container, false);
         mRecyclerView = view.findViewById(R.id.gallery_fragment);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this.getContext(), 3));
-        mRecyclerView.setAdapter(new GalleryAdapter(Media.getMedia(mType + 1)));
-        mRecyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
-            @Override
-            public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
-                int pos = parent.getChildLayoutPosition(view);
-                int space = 5;
-                outRect.left = space;
-                outRect.right = space;
-                outRect.top = space;
-                outRect.bottom = space;
-                if (pos % 3 == 0)
-                    outRect.left = 0;
-                if (pos % 3 == 2)
-                    outRect.right = 0;
-            }
-        });
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this.getContext(), getResources().getInteger(R.integer.gallery_count)));
+        mRecyclerView.setAdapter(new GalleryAdapter(Media.getMedia(mType, this.getContext()), mType));
         return view;
     }
 
@@ -64,24 +57,31 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView mLabel;
-        private SquareRelativeLayout mLayout;
+        private RelativeLayout mLayout;
+        public ImageView mThumb;
         public ViewHolder(View v) {
             super(v);
 
             mLabel = v.findViewById(R.id.item_media_title);
             mLayout = v.findViewById(R.id.item_media);
-        }
-
-        public void setColor(int color) {
-            mLayout.setBackgroundColor(color);
+            mThumb = v.findViewById(R.id.item_media_thumb);
         }
     }
 
     public class GalleryAdapter extends RecyclerView.Adapter<ViewHolder> {
-        private Media[] mMedia;
+        private List<Media> mMedia;
+        private Picasso mThumbs;
+        private int mType;
 
-        public GalleryAdapter(Media[] mMedia) {
+        public GalleryAdapter(List<Media> mMedia, int type) {
             this.mMedia = mMedia;
+            this.mThumbs = mThumbs;
+            this.mType = type;
+            if (mType == 0)
+                this.mThumbs = new Picasso.Builder(getContext()).build();
+            else
+                this.mThumbs = new Picasso.Builder(getContext())
+                        .addRequestHandler(new VideoRequestHandler()).build();
         }
 
         @Override
@@ -94,15 +94,19 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
 
         @Override
         public int getItemCount() {
-            return mMedia.length;
+            return mMedia.size();
         }
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            holder.mLabel.setText(mMedia[position].getName());
-            holder.setColor(mMedia[position].getColor());
-            holder.itemView.setTag(mMedia[position].getColor());
+            Media m = mMedia.get(position);
+            String path = mType == 0 ? "file://":"video:";
+            if (mType == 1)
+                holder.mLabel.setText(U.format(m.getDur()));
+            else
+                holder.mLabel.setText(m.getName());
             holder.itemView.setOnClickListener(GalleryFragment.this);
+            mThumbs.load(path + mMedia.get(position).getUrl()).fit().centerCrop().into(holder.mThumb);
         }
     }
 }
