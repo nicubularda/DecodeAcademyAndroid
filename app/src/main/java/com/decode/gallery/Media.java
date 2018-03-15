@@ -17,6 +17,7 @@ import java.util.List;
 public class Media {
     public static final int TYPE_IMAGE = 1;
     public static final int TYPE_VIDEO = 2;
+    public static final int PERM = 1984;
 
     private String mName;
     private int mType;

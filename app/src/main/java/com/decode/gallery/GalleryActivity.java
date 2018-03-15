@@ -1,16 +1,22 @@
 package com.decode.gallery;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.internal.NavigationMenu;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -35,14 +41,15 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
     private DrawerLayout mDrawer;
     private NavigationView mNavigation;
     private FloatingActionButton mFAB;
+    private int REQUEST_PERMISSION_SETTING = 9;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
-
-
+        if (savedInstanceState != null)
+            current = savedInstanceState.getInt("type");
 
         mToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -65,6 +72,16 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
 
         mTabs = findViewById(R.id.tabs);
         mPager = findViewById(R.id.pager);
+
+        mTabs.setupWithViewPager(mPager);
+
+        mPager.setCurrentItem(current);
+        mNavigation.setCheckedItem(current);
+
+        this.setAdapter();
+    }
+
+    private void setAdapter() {
         mPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override
             public Fragment getItem(int position) {
@@ -85,16 +102,24 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
                 return position == 0 ? "Photos" : "Videos";
             }
         });
-        mTabs.setupWithViewPager(mPager);
-        if (savedInstanceState != null)
-            current = savedInstanceState.getInt("type");
-        mPager.setCurrentItem(current);
-        mNavigation.setCheckedItem(current);
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int req, String[] perm, int[] grants) {
+        if (req == Media.PERM && grants.length > 0 && grants[0] == PackageManager.PERMISSION_GRANTED) {
+            for (Fragment f : getSupportFragmentManager().getFragments())
+                f.onRequestPermissionsResult(req, perm, grants);
+        }
+        else
+            super.onRequestPermissionsResult(req, perm, grants);
     }
 
     @Override
     protected void onActivityResult(int req, int type, Intent intent) {
-//        Snackbar mySnackbar = Snackbar.make(findViewById(R.id.drawer_layout),
+        if (req == REQUEST_PERMISSION_SETTING)
+            this.setAdapter();
+//        Snackbar mySnackbar = Snackbar.make(getRoot(),
 //                req == 0 ? "image" : "video", Snackbar.LENGTH_SHORT);
 //        mySnackbar.setAction("Undo", this);
 //        mySnackbar.show();
@@ -153,6 +178,18 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
         intent.putExtra("color", (int)value);
         startActivityForResult(intent, 0);
     }
+
+    public void askPerm() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", getPackageName(), null);
+        intent.setData(uri);
+        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+    }
+
+    public View getRoot() {
+        return findViewById(R.id.drawer_layout);
+    }
+
 
     private void setCurrent(int value) {
         current = value;
