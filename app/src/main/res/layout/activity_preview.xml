@@ -5,5 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.decode.gallery.PreviewActivity" android:gravity="center" android:orientation="vertical" android:id="@+id/preview">
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/preview_thumb"
+        android:transitionName="thumbnail"
+        android:background="#ff0000"/>
 
 </com.decode.gallery.SquareRelativeLayout>

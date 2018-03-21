@@ -5,6 +5,8 @@ import android.content.CursorLoader;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 
 import java.util.ArrayList;
@@ -14,7 +16,7 @@ import java.util.List;
  * Created by lucian.cioroga on 3/7/2018.
  */
 
-public class Media {
+public class Media implements Parcelable{
     public static final int TYPE_IMAGE = 1;
     public static final int TYPE_VIDEO = 2;
     public static final int PERM = 1984;
@@ -30,6 +32,29 @@ public class Media {
         mUrl = url;
         mDur = dur;
     }
+
+    protected Media(Parcel in) {
+        mName = in.readString();
+        mType = in.readInt();
+        mUrl = in.readString();
+        if (in.readByte() == 0) {
+            mDur = null;
+        } else {
+            mDur = in.readLong();
+        }
+    }
+
+    public static final Creator<Media> CREATOR = new Creator<Media>() {
+        @Override
+        public Media createFromParcel(Parcel in) {
+            return new Media(in);
+        }
+
+        @Override
+        public Media[] newArray(int size) {
+            return new Media[size];
+        }
+    };
 
     public String getName() {
         return mName;
@@ -69,5 +94,23 @@ public class Media {
 
         cursor.close();
         return media;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(mName);
+        parcel.writeInt(mType);
+        parcel.writeString(mUrl);
+        if (mDur == null) {
+            parcel.writeByte((byte) 0);
+        } else {
+            parcel.writeByte((byte) 1);
+            parcel.writeLong(mDur);
+        }
     }
 }

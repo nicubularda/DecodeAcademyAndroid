@@ -1,6 +1,7 @@
 package com.decode.gallery;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -18,12 +19,15 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
+
+import org.w3c.dom.Text;
 
 import java.lang.reflect.Array;
 import java.security.Permission;
@@ -35,6 +39,7 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
     private View view;
     private RecyclerView mRecyclerView;
     public static boolean mPermAsked = false;
+    private GalleryAdapter mAdapter;
 
     public GalleryFragment() {
     }
@@ -58,6 +63,14 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
         return view;
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == GalleryActivity.REQUEST_PREVIEW
+                && resultCode == Activity.RESULT_OK)
+            mAdapter.notifyDataSetChanged();
+    }
+
     private void checkPerm(boolean ask, boolean retry) {
         String perm = Manifest.permission.READ_EXTERNAL_STORAGE;
         if (ContextCompat.checkSelfPermission(this.getContext(), perm) != PackageManager.PERMISSION_GRANTED) {
@@ -68,7 +81,12 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
                 if (retry && ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), perm)) {
                     Snackbar mySnackbar = Snackbar.make(((ICallback) getActivity()).getRoot(),
                             "Grant gallery permissions, please!", Snackbar.LENGTH_SHORT);
-                    mySnackbar.setAction("Grant", this);
+                    mySnackbar.setAction("Grant", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            checkPerm(true, false);
+                        }
+                    });
                     mySnackbar.show();
                 } else if (!req) {
                     SharedPreferences.Editor editor = prefs.edit();
@@ -86,7 +104,7 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
     }
 
     private void setAdapter() {
-        mRecyclerView.setAdapter(new GalleryAdapter(Media.getMedia(mType, this.getContext()), mType));
+        mRecyclerView.setAdapter(mAdapter = new GalleryAdapter(Media.getMedia(mType, this.getContext()), mType));
     }
 
     @Override
@@ -98,23 +116,22 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
-        checkPerm(true, false);
-//        if (getActivity() instanceof ICallback
-//                && !getActivity().isDestroyed()
-//                && !getActivity().isFinishing())
-//            ((ICallback) getActivity()).addPreview(view.getTag());
+        if (getActivity() instanceof ICallback
+                && !getActivity().isDestroyed()
+                && !getActivity().isFinishing())
+            ((ICallback) getActivity()).addPreview(view);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView mLabel;
-        private RelativeLayout mLayout;
         public ImageView mThumb;
+        public TextView mVisits;
         public ViewHolder(View v) {
             super(v);
 
             mLabel = v.findViewById(R.id.item_media_title);
-            mLayout = v.findViewById(R.id.item_media);
             mThumb = v.findViewById(R.id.item_media_thumb);
+            mVisits = itemView.findViewById(R.id.visits);
         }
     }
 
@@ -125,7 +142,6 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
 
         public GalleryAdapter(List<Media> mMedia, int type) {
             this.mMedia = mMedia;
-            this.mThumbs = mThumbs;
             this.mType = type;
             if (mType == 0)
                 this.mThumbs = new Picasso.Builder(getContext()).build();
@@ -156,7 +172,11 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
             else
                 holder.mLabel.setText(m.getName());
             holder.itemView.setOnClickListener(GalleryFragment.this);
-            mThumbs.load(path + mMedia.get(position).getUrl()).fit().centerCrop().into(holder.mThumb);
+            mThumbs.load(path + m.getUrl()).fit().centerCrop().into(holder.mThumb);
+            holder.itemView.setTag(m);
+            ICallback gallery = (ICallback) getActivity();
+            holder.mVisits.setVisibility(gallery.getVisits(m) > 0 ? View.VISIBLE : View.GONE);
+            holder.mVisits.setText("" + gallery.getVisits(m));
         }
     }
 }

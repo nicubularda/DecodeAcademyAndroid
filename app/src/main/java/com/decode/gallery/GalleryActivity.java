@@ -1,9 +1,15 @@
 package com.decode.gallery;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.ActivityOptions;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -26,10 +32,20 @@ import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.transition.Explode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class GalleryActivity extends AppCompatActivity implements View.OnClickListener, ICallback{
 
@@ -41,16 +57,41 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
     private DrawerLayout mDrawer;
     private NavigationView mNavigation;
     private FloatingActionButton mFAB;
-    private int REQUEST_PERMISSION_SETTING = 9;
-
+    public static int REQUEST_PERMISSION_SETTING = 9;
+    public static int REQUEST_PREVIEW = 8;
+    private HashMap<String, Integer> mVisits= new HashMap<String, Integer>();
+    private Gson gson;
+    private DB.Helper mDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
-        if (savedInstanceState != null)
+        gson = new Gson();
+        mDB = new DB.Helper(getApplicationContext());
+        if (savedInstanceState != null) {
             current = savedInstanceState.getInt("type");
+            mVisits = (HashMap<String, Integer>) savedInstanceState.getSerializable("visits");
+        }
+        else {
+//            SharedPreferences prefs = getSharedPreferences("PERMISSION_SHARED_PREFERENCES", Context.MODE_PRIVATE);
+//            String v = prefs.getString("visits", "");
+//            if (v != "") {
+//                mVisits = gson.fromJson(v, new TypeToken<HashMap<String, Integer>>(){}.getType());
+//            }
 
+            SQLiteDatabase db = mDB.getReadableDatabase();
+            Cursor cursor = db.rawQuery("SELECT * FROM " + DB.Visit.Entry.TABLE_NAME, null);
+            if (cursor.getCount() > 0) {
+                cursor.moveToFirst();
+
+                do {
+                    mVisits.put(cursor.getString(1), cursor.getInt(2));
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+
+        }
         mToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         mDrawer = findViewById(R.id.drawer_layout);
@@ -69,16 +110,21 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
         });
         mFAB = findViewById(R.id.floating_button);
         mFAB.setOnClickListener(this);
-
         mTabs = findViewById(R.id.tabs);
         mPager = findViewById(R.id.pager);
-
         mTabs.setupWithViewPager(mPager);
-
         mPager.setCurrentItem(current);
         mNavigation.setCheckedItem(current);
-
         this.setAdapter();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        SharedPreferences prefs = getSharedPreferences("PERMISSION_SHARED_PREFERENCES", Context.MODE_PRIVATE);
+//        SharedPreferences.Editor editor = prefs.edit();
+//        editor.putString("visits", gson.toJson(mVisits));
+//        editor.commit();
     }
 
     private void setAdapter() {
@@ -105,6 +151,18 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
 
     }
 
+    private void writeData(String key, int visits) {
+        SQLiteDatabase db = mDB.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(DB.Visit.Entry.COLUMN_URL, key);
+        values.put(DB.Visit.Entry.COLUMN_VISITS, visits);
+
+        if (db.update(DB.Visit.Entry.TABLE_NAME, values,
+                DB.Visit.Entry.COLUMN_URL + "= ?", new String[]{key}) <= 0)
+            db.insert(DB.Visit.Entry.TABLE_NAME, null, values);
+    }
+
     @Override
     public void onRequestPermissionsResult(int req, String[] perm, int[] grants) {
         if (req == Media.PERM && grants.length > 0 && grants[0] == PackageManager.PERMISSION_GRANTED) {
@@ -116,13 +174,17 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
     }
 
     @Override
-    protected void onActivityResult(int req, int type, Intent intent) {
-        if (req == REQUEST_PERMISSION_SETTING)
+    protected void onActivityResult(int requestCode, int result, Intent data) {
+        if (requestCode == REQUEST_PREVIEW && result == RESULT_OK) {
+            Media media = data.getParcelableExtra("media");
+            int v = mVisits.containsKey(media.getUrl()) ? mVisits.get(media.getUrl()) : 0;
+            mVisits.put(media.getUrl(), v + 1);
+            writeData(media.getUrl(), v + 1);
+            for (Fragment f : getSupportFragmentManager().getFragments())
+                f.onActivityResult(requestCode, result, data);
+        }
+        else if (requestCode == REQUEST_PERMISSION_SETTING)
             this.setAdapter();
-//        Snackbar mySnackbar = Snackbar.make(getRoot(),
-//                req == 0 ? "image" : "video", Snackbar.LENGTH_SHORT);
-//        mySnackbar.setAction("Undo", this);
-//        mySnackbar.show();
     }
 
     @Override
@@ -162,6 +224,7 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
     public void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
         state.putInt("type", current);
+        state.putSerializable("visits", mVisits);
     }
 
     private void selectItem(MenuItem item) {
@@ -173,10 +236,13 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
-    public void addPreview(Object value) {
+    @SuppressLint("RestrictedApi")
+    public void addPreview(View view) {
         Intent intent = new Intent(this, PreviewActivity.class);
-        intent.putExtra("color", (int)value);
-        startActivityForResult(intent, 0);
+        ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(this, view.findViewById(R.id.item_media_thumb),"thumbnail");
+
+        intent.putExtra("media", (Media)view.getTag());
+        startActivityForResult(intent, REQUEST_PREVIEW, options.toBundle());
     }
 
     public void askPerm() {
@@ -190,11 +256,13 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
         return findViewById(R.id.drawer_layout);
     }
 
-
     private void setCurrent(int value) {
         current = value;
         mPager.setCurrentItem(current);
     }
 
+    public int getVisits(Media media) {
+        return mVisits.containsKey(media.getUrl()) ? mVisits.get(media.getUrl()) : 0;
+    }
 
 }

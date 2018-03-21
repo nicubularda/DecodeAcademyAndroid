@@ -7,7 +7,9 @@ import android.view.View;
  */
 
 interface ICallback {
-    void addPreview(Object value);
+    void addPreview(View view);
     View getRoot();
     void askPerm();
+    int getVisits(Media media);
+
 }

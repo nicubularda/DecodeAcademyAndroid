@@ -1,10 +1,14 @@
 <com.decode.gallery.SquareRelativeLayout android:id="@+id/item_media"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent" android:layout_margin="3dp">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="3dp">
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/item_media_thumb"/>
+        android:id="@+id/item_media_thumb"
+        android:transitionName="thumbnail"
+        android:background="#ff0000"/>
     <TextView
         android:id="@+id/item_media_title"
         android:layout_width="match_parent"
@@ -15,4 +19,22 @@
         android:textColor="@color/colorPrimaryText"
         android:textAlignment="viewEnd"
         />
+    <TextView android:id="@+id/visits"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#55000000"
+        android:gravity="center"
+        android:padding="8dp"
+        android:shadowColor="#333"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="1"
+        android:text="2"
+        android:textColor="#fff"
+        android:textSize="22sp" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/ripple"/>
 </com.decode.gallery.SquareRelativeLayout>
