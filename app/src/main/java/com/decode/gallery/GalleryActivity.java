@@ -40,9 +40,11 @@ import android.view.Window;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import io.fabric.sdk.android.Fabric;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,6 +68,7 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_gallery);
         gson = new Gson();
         mDB = new DB.Helper(getApplicationContext());
