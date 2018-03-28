@@ -25,12 +25,13 @@ public class Media implements Parcelable{
     private int mType;
     private String mUrl;
     private Long mDur;
-
+    public int mIsCloud;
     public Media(int type, String name, String url, Long dur) {
         mType = type;
         mName = name;
         mUrl = url;
         mDur = dur;
+        mIsCloud = 0;
     }
 
     protected Media(Parcel in) {
@@ -42,6 +43,7 @@ public class Media implements Parcelable{
         } else {
             mDur = in.readLong();
         }
+        mIsCloud = in.readInt();
     }
 
     public static final Creator<Media> CREATOR = new Creator<Media>() {
@@ -112,5 +114,6 @@ public class Media implements Parcelable{
             parcel.writeByte((byte) 1);
             parcel.writeLong(mDur);
         }
+        parcel.writeInt(mIsCloud);
     }
 }

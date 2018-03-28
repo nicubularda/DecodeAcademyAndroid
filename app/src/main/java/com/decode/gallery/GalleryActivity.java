@@ -3,14 +3,19 @@ package com.decode.gallery;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.IBinder;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -23,6 +28,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -64,6 +70,24 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
     private HashMap<String, Integer> mVisits= new HashMap<String, Integer>();
     private Gson gson;
     private DB.Helper mDB;
+    private Cloud mCloud;
+    private boolean mBound;
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            Cloud.CloudBinder binder = (Cloud.CloudBinder) service;
+            mCloud = (Cloud) binder.getService();
+            mBound = true;
+            if (mCloud != null)
+                mCloud.fetch();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +146,26 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (!mBound) {
+            Intent intent = new Intent(this, Cloud.class);
+            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mBound) {
+            unbindService(mConnection);
+            mBound = false;
+        }
+    }
+
+
+
+    @Override
     protected void onPause() {
         super.onPause();
 //        SharedPreferences prefs = getSharedPreferences("PERMISSION_SHARED_PREFERENCES", Context.MODE_PRIVATE);
@@ -134,7 +178,7 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
         mPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override
             public Fragment getItem(int position) {
-                GalleryFragment frag = new GalleryFragment();
+                Fragment frag = position == 2 ? new CloudGalleryFragment() : new GalleryFragment();
                 Bundle arg = new Bundle();
                 arg.putInt("type", position);
                 frag.setArguments(arg);
@@ -143,12 +187,12 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
 
             @Override
             public int getCount() {
-                return 2;
+                return 3;
             }
 
             @Override
             public CharSequence getPageTitle(int position) {
-                return position == 0 ? "Photos" : "Videos";
+                return position == 0 ? "Photos" : position == 1 ? "Videos" : "Cloud";
             }
         });
 

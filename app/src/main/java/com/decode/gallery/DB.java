@@ -15,6 +15,7 @@ public class DB {
             public final static String TABLE_NAME = "visits";
             public final static String COLUMN_URL = "url";
             public final static String COLUMN_VISITS = "visits";
+            public final static String COLUMN_TITLE = "title";
         }
 
         private static final String SQL_CREATE =
@@ -24,6 +25,23 @@ public class DB {
                         Entry.COLUMN_VISITS + " INTEGER)";
 
         private static final String SQL_DROP =
+                "DROP TABLE IF EXISTS " + Entry.TABLE_NAME;
+    }
+
+    public final static class CloudPhoto {
+        public final static class Entry implements BaseColumns {
+            public final static String TABLE_NAME = "cloud_photos";
+            public final static String COLUMN_URL = "url";
+            public final static String COLUMN_TITLE = "title";
+        }
+
+        public static final String SQL_CREATE =
+                "CREATE TABLE " + Entry.TABLE_NAME + " (" +
+                        Entry._ID + " INTEGER PRIMARY KEY," +
+                        Entry.COLUMN_URL + " TEXT," +
+                        Entry.COLUMN_TITLE + " TEXT)";
+
+        public static final String SQL_DROP =
                 "DROP TABLE IF EXISTS " + Entry.TABLE_NAME;
     }
 
@@ -38,11 +56,13 @@ public class DB {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(Visit.SQL_CREATE);
+            db.execSQL(CloudPhoto.SQL_CREATE);
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             db.execSQL(Visit.SQL_DROP);
+            db.execSQL(CloudPhoto.SQL_DROP);
             onCreate(db);
         }
     }

@@ -35,7 +35,7 @@ public class PreviewActivity extends AppCompatActivity implements View.OnClickLi
         else
             this.mThumbs = new Picasso.Builder(getApplicationContext())
                     .addRequestHandler(new VideoRequestHandler()).build();
-        String path = mMedia.getType() == 0 ? "file://":"video:";
+        String path = mMedia.mIsCloud == 1 ? "" : mMedia.getType() == 0 ? "file://":"video:";
         mThumbs.load(path + mMedia.getUrl()).fit().centerCrop().into(mThumb, new Callback() {
             @Override
             public void onSuccess() {
@@ -44,7 +44,7 @@ public class PreviewActivity extends AppCompatActivity implements View.OnClickLi
 
             @Override
             public void onError() {
-
+                startPostponedEnterTransition();
             }
         });
         supportPostponeEnterTransition();
