@@ -15,11 +15,11 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -39,7 +39,7 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
     private View view;
     private RecyclerView mRecyclerView;
     public static boolean mPermAsked = false;
-    private GalleryAdapter mAdapter;
+    private RecyclerView.Adapter mAdapter;
 
     public GalleryFragment() {
     }
@@ -58,7 +58,11 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_gallery, container, false);
         mRecyclerView = view.findViewById(R.id.gallery_fragment);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), getResources().getInteger(R.integer.gallery_count)));
+        if (mType == Media.TYPE_SOUND) {
+            mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), 1, false));
+        }
+        else
+            mRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), getResources().getInteger(R.integer.gallery_count)));
         checkPerm(!GalleryFragment.mPermAsked, true);
         return view;
     }
@@ -125,13 +129,19 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView mLabel;
         public ImageView mThumb;
-        public TextView mVisits;
-        public ViewHolder(View v) {
+        public TextView mInfo;
+        public ViewHolder(View v, int type) {
             super(v);
 
-            mLabel = v.findViewById(R.id.item_media_title);
-            mThumb = v.findViewById(R.id.item_media_thumb);
-            mVisits = itemView.findViewById(R.id.visits);
+            if (type == Media.TYPE_SOUND) {
+                mLabel = v.findViewById(R.id.sound_title);
+                mInfo = v.findViewById(R.id.sound_info);
+            }
+            else {
+                mLabel = v.findViewById(R.id.item_media_title);
+                mThumb = v.findViewById(R.id.item_media_thumb);
+                mInfo = itemView.findViewById(R.id.visits);
+            }
         }
     }
 
@@ -143,19 +153,22 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
         public GalleryAdapter(List<Media> mMedia, int type) {
             this.mMedia = mMedia;
             this.mType = type;
-            if (mType == 0)
+            if (mType == Media.TYPE_IMAGE)
                 this.mThumbs = new Picasso.Builder(getContext()).build();
-            else
+            else if (mType == Media.TYPE_VIDEO)
                 this.mThumbs = new Picasso.Builder(getContext())
                         .addRequestHandler(new VideoRequestHandler()).build();
+            else if (mType == Media.TYPE_SOUND) {
+
+            }
         }
 
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             LayoutInflater in = LayoutInflater.from(parent.getContext());
-            View v = in.inflate(R.layout.item_media,
+            View v = in.inflate(mType == Media.TYPE_SOUND ? R.layout.item_media_sound : R.layout.item_media,
                     parent, false);
-            return new ViewHolder(v);
+            return new ViewHolder(v, mType);
         }
 
         @Override
@@ -166,17 +179,22 @@ public class GalleryFragment extends Fragment implements View.OnClickListener {
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
             Media m = mMedia.get(position);
-            String path = mType == 0 ? "file://":"video:";
-            if (mType == 1)
+            String path = mType == Media.TYPE_IMAGE ? "file://":"video:";
+            if (mType == Media.TYPE_VIDEO)
                 holder.mLabel.setText(U.format(m.getDur()));
             else
                 holder.mLabel.setText(m.getName());
             holder.itemView.setOnClickListener(GalleryFragment.this);
-            mThumbs.load(path + m.getUrl()).fit().centerCrop().into(holder.mThumb);
+            if (mThumbs != null)
+                mThumbs.load(path + m.getUrl()).fit().centerCrop().into(holder.mThumb);
             holder.itemView.setTag(m);
             ICallback gallery = (ICallback) getActivity();
-            holder.mVisits.setVisibility(gallery.getVisits(m) > 0 ? View.VISIBLE : View.GONE);
-            holder.mVisits.setText("" + gallery.getVisits(m));
+            if (mType == Media.TYPE_SOUND)
+                holder.mInfo.setText(m.getAlbum() + " by " + m.getArtist());
+            else {
+                holder.mInfo.setVisibility(gallery.getVisits(m) > 0 ? View.VISIBLE : View.GONE);
+                holder.mInfo.setText("" + gallery.getVisits(m));
+            }
         }
     }
 }

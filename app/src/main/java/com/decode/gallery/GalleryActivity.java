@@ -178,7 +178,7 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
         mPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override
             public Fragment getItem(int position) {
-                Fragment frag = position == 2 ? new CloudGalleryFragment() : new GalleryFragment();
+                Fragment frag = position == 3 ? new CloudGalleryFragment() : new GalleryFragment();
                 Bundle arg = new Bundle();
                 arg.putInt("type", position);
                 frag.setArguments(arg);
@@ -187,12 +187,22 @@ public class GalleryActivity extends AppCompatActivity implements View.OnClickLi
 
             @Override
             public int getCount() {
-                return 3;
+                return 4;
             }
 
             @Override
             public CharSequence getPageTitle(int position) {
-                return position == 0 ? "Photos" : position == 1 ? "Videos" : "Cloud";
+                switch (position) {
+                    case 0:
+                        return "Photos";
+                    case 1:
+                        return "Videos";
+                    case 2:
+                        return "Sounds";
+                    case 3:
+                        return "Cloud";
+                }
+                return "Other";
             }
         });
 

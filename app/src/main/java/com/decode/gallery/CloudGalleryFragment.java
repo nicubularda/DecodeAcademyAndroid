@@ -67,7 +67,7 @@ public class CloudGalleryFragment extends Fragment implements View.OnClickListen
             List<Media> media = new ArrayList<>();
             do {
                 Media m = new Media(Media.TYPE_IMAGE, cursor.getString(2),
-                        cursor.getString(1)+"?w=200", new Long(0));
+                        cursor.getString(1)+"?w=200", new Long(0), "", "");
                 m.mIsCloud = 1;
                 media.add(m);
             } while (cursor.moveToNext());
